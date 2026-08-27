@@ -1,0 +1,13 @@
+{
+  "name": "alumni-engagement-portal",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "db:generate": "pnpm --filter @alumni/db generate",
+    "db:migrate": "pnpm --filter @alumni/db migrate",
+    "db:studio": "pnpm --filter @alumni/db studio",
+    "db:seed": "pnpm --filter @alumni/db seed"
+  }
+}

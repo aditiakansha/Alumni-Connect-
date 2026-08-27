@@ -1,0 +1,231 @@
+// Alumni Engagement Portal — Master Schema
+// DB: MySQL | ORM: Prisma
+// Owner: Aditya (auth/authorization module + master schema + integration)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  ALUMNI
+  STUDENT
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+}
+
+enum ReferralStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum EventType {
+  HACKATHON
+  WORKSHOP
+  MEETUP
+  WEBINAR
+}
+
+enum RSVPStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+// ---------------------------------------------------------------------------
+// AUTH / CORE USER (owned by Aditya)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile        Profile?
+  postedJobs     Job[]          @relation("JobPoster")
+  referralsMade  Referral[]     @relation("Requester")
+  referralsGiven Referral[]     @relation("AlumniReferrer")
+  forumPosts     ForumPost[]
+  forumComments  ForumComment[]
+  createdEvents  Event[]        @relation("EventCreator")
+  eventRsvps     EventRSVP[]
+  refreshTokens  RefreshToken[]
+
+  @@map("users")
+}
+
+// Supports refresh-token rotation / logout-everywhere for the auth module.
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// ALUMNI DIRECTORY
+// ---------------------------------------------------------------------------
+
+model Profile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName        String
+  graduationYear  Int?
+  degree          String?
+  branch          String?
+  currentCompany  String?
+  currentPosition String?
+  location        String?
+  bio             String?  @db.Text
+  linkedinUrl     String?
+  avatarUrl       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([graduationYear])
+  @@index([branch])
+  @@map("profiles")
+}
+
+// ---------------------------------------------------------------------------
+// JOB / INTERNSHIP BOARD
+// ---------------------------------------------------------------------------
+
+model Job {
+  id          String    @id @default(uuid())
+  postedById  String
+  postedBy    User      @relation("JobPoster", fields: [postedById], references: [id], onDelete: Cascade)
+  title       String
+  company     String
+  description String    @db.Text
+  type        JobType
+  location    String?
+  applyUrl    String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+
+  referrals Referral[]
+
+  @@index([type])
+  @@index([isActive])
+  @@map("jobs")
+}
+
+// ---------------------------------------------------------------------------
+// REFERRAL REQUEST SYSTEM
+// ---------------------------------------------------------------------------
+
+model Referral {
+  id          String         @id @default(uuid())
+  jobId       String
+  job         Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User           @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  alumniId    String
+  alumni      User           @relation("AlumniReferrer", fields: [alumniId], references: [id], onDelete: Cascade)
+  message     String?        @db.Text
+  status      ReferralStatus @default(PENDING)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([jobId, requesterId, alumniId])
+  @@index([status])
+  @@map("referrals")
+}
+
+// ---------------------------------------------------------------------------
+// DISCUSSION FORUM
+// ---------------------------------------------------------------------------
+
+model ForumPost {
+  id        String   @id @default(uuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   @db.Text
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments ForumComment[]
+
+  @@index([category])
+  @@map("forum_posts")
+}
+
+model ForumComment {
+  id        String    @id @default(uuid())
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
+  createdAt DateTime  @default(now())
+
+  @@index([postId])
+  @@map("forum_comments")
+}
+
+// ---------------------------------------------------------------------------
+// EVENTS BOARD (hackathons / workshops)
+// ---------------------------------------------------------------------------
+
+model Event {
+  id              String    @id @default(uuid())
+  createdById     String
+  createdBy       User      @relation("EventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  title           String
+  description     String    @db.Text
+  type            EventType
+  startDate       DateTime
+  endDate         DateTime?
+  location        String?
+  isOnline        Boolean   @default(false)
+  registrationUrl String?
+  createdAt       DateTime  @default(now())
+
+  rsvps EventRSVP[]
+
+  @@index([startDate])
+  @@index([type])
+  @@map("events")
+}
+
+model EventRSVP {
+  id        String     @id @default(uuid())
+  eventId   String
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    RSVPStatus @default(GOING)
+  createdAt DateTime   @default(now())
+
+  @@unique([eventId, userId])
+  @@map("event_rsvps")
+}
