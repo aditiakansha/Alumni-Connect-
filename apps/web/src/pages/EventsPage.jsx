@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Users, CheckCircle2, Plus, Clock, MapPin, X, Edit3, Trash2, HeartHandshake, ShieldCheck, Mail, Hash } from 'lucide-react';
+import { fetchApi, formatDate } from '../lib/api';
 
 const INITIAL_EVENTS = [
   {
@@ -84,6 +85,21 @@ export default function EventsPage({ isAdmin }) {
     message: ''
   });
 
+  React.useEffect(() => {
+    fetchApi('/events').then((apiEvents) => {
+      setEvents(apiEvents.map((event) => ({
+        ...event,
+        category: event.type,
+        date: formatDate(event.startDate),
+        time: event.endDate ? `${formatDate(event.startDate)} - ${formatDate(event.endDate)}` : 'Details available after registration',
+        organizer: 'AlumniConnect community',
+        capacity: 0,
+        registeredCount: 0,
+        tags: event.isOnline ? ['Online'] : ['In person']
+      })));
+    }).catch(() => {});
+  }, []);
+
   const filteredEvents = events.filter(
     (e) => selectedCategory === 'All' || e.category === selectedCategory
   );
@@ -105,6 +121,15 @@ export default function EventsPage({ isAdmin }) {
       setRegError('');
       setRegForm({ regNumber: '', schoolEmail: '' });
       setRegisterEventTarget(item);
+    }
+  };
+
+  const handleApiRsvp = async (item) => {
+    try {
+      await fetchApi(`/events/${item.id}/rsvp`, { method: 'POST', body: JSON.stringify({ status: 'GOING' }) });
+      setRegisteredEvents((prev) => new Set(prev).add(item.id));
+    } catch {
+      handleRegisterClick(item);
     }
   };
 
@@ -340,7 +365,7 @@ export default function EventsPage({ isAdmin }) {
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <button
                   disabled={isFull && !isRegistered}
-                  onClick={() => handleRegisterClick(item)}
+                  onClick={() => (String(item.id).startsWith('e') ? handleRegisterClick(item) : handleApiRsvp(item))}
                   className={`w-full py-3 px-4 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                     isRegistered
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'

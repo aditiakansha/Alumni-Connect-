@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import DirectoryPage from './pages/DirectoryPage';
 import EventsPage from './pages/EventsPage';
+import DiscussionsPage from './pages/DiscussionsPage';
+import JobsPage from './pages/JobsPage';
+import ReferralsPage from './pages/ReferralsPage';
 
 export default function App() {
   const [userRole, setUserRole] = useState('student');
@@ -32,6 +35,9 @@ export default function App() {
           <Route path="/" element={<Navigate to="/directory" replace />} />
           <Route path="/directory" element={<DirectoryPage isAdmin={isAdmin} />} />
           <Route path="/events" element={<EventsPage isAdmin={isAdmin} />} />
+          <Route path="/discussions" element={<DiscussionsPage />} />
+          <Route path="/jobs" element={<JobsPage isAdmin={isAdmin} />} />
+          <Route path="/referrals" element={<ReferralsPage />} />
           <Route path="*" element={<Navigate to="/directory" replace />} />
         </Routes>
       </div>
