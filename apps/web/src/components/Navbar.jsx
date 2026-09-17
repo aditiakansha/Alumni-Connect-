@@ -1,20 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Users, Calendar, MessageSquare, BriefcaseBusiness, Handshake, LogIn, X } from 'lucide-react';
+import { fetchApi } from '../lib/api';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Navbar() {
   const location = useLocation();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const googleBtnRef = useRef(null);
 
   const navLinks = [
+    { name: 'Home', path: '/', icon: null },
     { name: 'Directory', path: '/directory', icon: Users },
     { name: 'Events', path: '/events', icon: Calendar },
     { name: 'Discussions', path: '/discussions', icon: MessageSquare },
     { name: 'Jobs', path: '/jobs', icon: BriefcaseBusiness },
     { name: 'Referrals', path: '/referrals', icon: Handshake }
   ];
+
+  useEffect(() => {
+    if (!isLoginOpen || !GOOGLE_CLIENT_ID || !window.google) return;
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: async (response) => {
+        try {
+          const data = await fetchApi('/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({ idToken: response.credential }),
+          });
+
+          localStorage.setItem('accessToken', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          setIsLoginOpen(false);
+          window.location.reload();
+        } catch (err) {
+          window.alert('Sign-in failed. Please try again.');
+          console.error(err);
+        }
+      },
+    });
+
+    window.google.accounts.id.renderButton(googleBtnRef.current, {
+      theme: 'outline',
+      size: 'large',
+      width: 360,
+    });
+  }, [isLoginOpen]);
 
   return (
     <header className="border-b border-slate-100 bg-white sticky top-0 z-40 shadow-xs">
@@ -43,7 +77,7 @@ export default function Navbar() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {Icon && <Icon className="w-4 h-4" />}
                 <span className="hidden lg:inline">{link.name}</span>
               </Link>
             );
@@ -67,19 +101,12 @@ export default function Navbar() {
             <span className="eyebrow">Welcome back to the network</span>
             <h2 className="page-title text-3xl">Sign in<span className="text-[#ffc002]">.</span></h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">Use your Google account to continue to AlumniConnect.</p>
-            <button
-              className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[#002148] shadow-sm transition hover:border-[#ffc002] hover:bg-[#fffaf0]"
-              onClick={() => {
-                if (!GOOGLE_CLIENT_ID) {
-                  window.alert('Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to the root .env file.');
-                  return;
-                }
-                window.alert('Google sign-in is configured for client ID ' + GOOGLE_CLIENT_ID.slice(0, 12) + '... Connect the OAuth callback to finish authentication.');
-              }}
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 font-serif font-bold text-[#4285F4]">G</span>
-              Sign in with Google
-            </button>
+            <div ref={googleBtnRef} className="mt-7 flex w-full justify-center" />
+            {!GOOGLE_CLIENT_ID && (
+              <p className="mt-4 text-center text-[11px] text-slate-400">
+                Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your web env file.
+              </p>
+            )}
             <p className="mt-4 text-center text-[11px] text-slate-400">Your Google client secret belongs on the API server only.</p>
           </section>
         </div>

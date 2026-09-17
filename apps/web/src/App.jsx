@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Home from './pages/Home';
 import DirectoryPage from './pages/DirectoryPage';
 import EventsPage from './pages/EventsPage';
 import DiscussionsPage from './pages/DiscussionsPage';
@@ -32,7 +33,7 @@ export default function App() {
         <Navbar />
 
         <Routes>
-          <Route path="/" element={<Navigate to="/directory" replace />} />
+          <Route path="/" element={<Home />} />
           <Route path="/directory" element={<DirectoryPage isAdmin={isAdmin} />} />
           <Route path="/events" element={<EventsPage isAdmin={isAdmin} />} />
           <Route path="/discussions" element={<DiscussionsPage />} />
