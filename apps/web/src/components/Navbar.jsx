@@ -8,7 +8,34 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export default function Navbar() {
   const location = useLocation();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  });
   const googleBtnRef = useRef(null);
+
+  useEffect(() => {
+    if (!localStorage.getItem('accessToken')) return;
+
+    fetchApi('/auth/me')
+      .then((currentUser) => {
+        const storedUser = {
+          ...currentUser,
+          name: currentUser.profile?.fullName || currentUser.name,
+          avatarUrl: currentUser.profile?.avatarUrl || currentUser.avatarUrl,
+        };
+        localStorage.setItem('user', JSON.stringify(storedUser));
+        setUser(storedUser);
+      })
+      .catch(() => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        setUser(null);
+      });
+  }, []);
 
   const navLinks = [
     { name: 'Home', path: '/', icon: null },
@@ -33,11 +60,12 @@ export default function Navbar() {
 
           localStorage.setItem('accessToken', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+          setUser(data.user);
 
           setIsLoginOpen(false);
           window.location.reload();
         } catch (err) {
-          window.alert('Sign-in failed. Please try again.');
+          window.alert(`Sign-in failed: ${err.message || 'Please try again.'}`);
           console.error(err);
         }
       },
@@ -84,11 +112,26 @@ export default function Navbar() {
           })}
         </nav>
         <button
-          onClick={() => setIsLoginOpen(true)}
+          onClick={() => user ? (window.location.href = '/profile') : setIsLoginOpen(true)}
           className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#ffc002] px-3 py-2 text-xs font-bold text-[#002148] transition-colors hover:bg-[#ffc002]"
         >
-          <LogIn className="w-4 h-4" />
-          <span className="hidden sm:inline">Log in</span>
+          {user ? (
+            <>
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full" />
+              ) : (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#002148] text-[10px] text-white">
+                  {(user.name || user.email || '?').charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="max-w-32 truncate">{user.name || user.email}</span>
+            </>
+          ) : (
+            <>
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Log in</span>
+            </>
+          )}
         </button>
         </div>
       </div>

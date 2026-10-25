@@ -24,4 +24,14 @@ router.post("/:id/rsvp", requireAuth, async (req, res) => {
   res.json(rsvp);
 });
 
+router.delete("/:id", requireAuth, async (req, res) => {
+  const event = await prisma.event.findUnique({ where: { id: req.params.id }, select: { createdById: true } });
+  if (!event) return res.status(404).json({ message: "Event not found" });
+  if (event.createdById !== req.user!.userId && req.user!.role !== "ADMIN") {
+    return res.status(403).json({ message: "You can only delete events you created" });
+  }
+  await prisma.event.delete({ where: { id: req.params.id } });
+  res.status(204).send();
+});
+
 export default router;

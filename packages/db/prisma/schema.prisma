@@ -63,6 +63,8 @@ model User {
   postedJobs     Job[]          @relation("JobPoster")
   referralsMade  Referral[]     @relation("Requester")
   referralsGiven Referral[]     @relation("AlumniReferrer")
+  referralRequests ReferralRequest[]
+  jobApplications JobApplication[]
   forumPosts     ForumPost[]
   forumComments  ForumComment[]
   createdEvents  Event[]        @relation("EventCreator")
@@ -140,6 +142,22 @@ model Job {
   @@map("jobs")
 }
 
+model JobApplication {
+  id          String   @id @default(uuid())
+  requesterId String   @map("requester_id")
+  requester   User     @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  jobKey      String   @map("job_key")
+  jobTitle    String   @map("job_title")
+  company     String
+  resumeName  String   @map("resume_name")
+  resumeData  String   @db.LongText @map("resume_data")
+  appliedAt   DateTime @default(now()) @map("applied_at")
+
+  @@unique([requesterId, jobKey])
+  @@index([requesterId])
+  @@map("job_applications")
+}
+
 // ---------------------------------------------------------------------------
 // REFERRAL REQUEST SYSTEM
 // ---------------------------------------------------------------------------
@@ -160,6 +178,27 @@ model Referral {
   @@unique([jobId, requesterId, alumniId])
   @@index([status])
   @@map("referrals")
+}
+
+model ReferralRequest {
+  id                 String         @id @default(uuid())
+  requesterId        String         @map("requester_id")
+  requester          User           @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  contactKey         String         @map("contact_key")
+  contactName        String         @map("contact_name")
+  contactRole        String?        @map("contact_role")
+  contactCompany     String?        @map("contact_company")
+  contactLinkedinUrl String?        @map("contact_linkedin_url")
+  targetRole         String         @map("target_role")
+  targetCompany      String?        @map("target_company")
+  message            String?        @db.Text
+  status             ReferralStatus @default(PENDING)
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  @@index([requesterId])
+  @@index([contactKey])
+  @@map("referral_requests")
 }
 
 // ---------------------------------------------------------------------------

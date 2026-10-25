@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ExternalLink, GraduationCap, MapPin, Briefcase } from 'lucide-react';
 import { toLinkedInUrl, LinkedInIcon } from '../lib/linkedin.jsx';
+import { initialsAvatar } from '../lib/avatar';
 
 export default function AlumniDetailModal({ alumni, onClose }) {
   if (!alumni) return null;
@@ -17,11 +18,11 @@ export default function AlumniDetailModal({ alumni, onClose }) {
 
         <div className="relative h-64 bg-[#002148] overflow-hidden">
           <img 
-            src={alumni.avatar} 
+            src={alumni.avatar || initialsAvatar(alumni.name)} 
             alt={alumni.name}
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=80';
+              e.target.src = initialsAvatar(alumni.name);
             }}
             className="w-full h-full object-cover object-top"
           />

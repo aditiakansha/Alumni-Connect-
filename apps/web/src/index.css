@@ -27,4 +27,8 @@
 	.status-pending { @apply bg-[#ffc002]/20 text-[#856400]; }
 	.status-accepted { @apply bg-emerald-100 text-emerald-700; }
 	.status-rejected { @apply bg-red-100 text-red-700; }
+	.status-dot { @apply inline-block h-3 w-3 shrink-0 rounded-full; }
+	.status-dot-pending { @apply bg-[#ffc002] ring-4 ring-[#ffc002]/20; }
+	.status-dot-accepted { @apply bg-emerald-500 ring-4 ring-emerald-100; }
+	.status-dot-rejected { @apply bg-red-500 ring-4 ring-red-100; }
 }

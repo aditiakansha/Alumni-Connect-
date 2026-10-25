@@ -84,7 +84,10 @@ export async function googleLogin(req: Request, res: Response) {
     return res.status(401).json({ message: "Google email not verified" });
   }
 
-  let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
+  let user = await prisma.user.findUnique({
+    where: { email: googleUser.email },
+    include: { profile: true },
+  });
 
   if (!user) {
     // No account yet — create one. Random unusable password hash since this
@@ -104,11 +107,25 @@ export async function googleLogin(req: Request, res: Response) {
           },
         },
       },
+      include: { profile: true },
     });
   }
 
+  if (!user) {
+    return res.status(500).json({ message: "Unable to create or load user" });
+  }
+
   const token = signAccessToken({ userId: user.id, role: user.role });
-  return res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
+  return res.json({
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.profile?.fullName ?? googleUser.name,
+      avatarUrl: user.profile?.avatarUrl ?? googleUser.picture,
+    },
+  });
 }
 
 export async function me(req: Request, res: Response) {

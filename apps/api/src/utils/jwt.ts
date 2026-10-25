@@ -10,7 +10,9 @@ export interface JwtPayload {
 
 export function signAccessToken(payload: JwtPayload): string {
   if (!JWT_SECRET) throw new Error("JWT_SECRET is not set in the environment");
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+  });
 }
 
 export function verifyAccessToken(token: string): JwtPayload {

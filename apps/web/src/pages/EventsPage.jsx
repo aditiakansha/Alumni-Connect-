@@ -41,6 +41,32 @@ const INITIAL_EVENTS = [
     capacity: 60,
     registeredCount: 52,
     tags: ['Startups', 'Fundraising', 'Networking']
+  },
+  {
+    id: 'e4',
+    title: 'VIT GreenTech Hackathon',
+    category: 'Hackathon',
+    date: 'Nov 21 - 22, 2026',
+    time: '36 Hours Live',
+    location: 'Vellore Campus & Virtual',
+    organizer: 'VIT Sustainability Collective',
+    description: 'Build practical solutions for clean energy, water conservation, and sustainable campus operations.',
+    capacity: 240,
+    registeredCount: 96,
+    tags: ['Climate Tech', 'IoT', 'Sustainability']
+  },
+  {
+    id: 'e5',
+    title: 'Women in Technology Leadership Circle',
+    category: 'Event',
+    date: 'Dec 04, 2026',
+    time: '6:00 PM - 8:00 PM IST',
+    location: 'Chennai & Virtual',
+    organizer: 'VIT Women Alumni Network',
+    description: 'A candid evening of mentoring, career stories, and practical advice from technology leaders across the alumni network.',
+    capacity: 120,
+    registeredCount: 71,
+    tags: ['Mentoring', 'Leadership', 'Community']
   }
 ];
 
@@ -56,6 +82,8 @@ export default function EventsPage({ isAdmin }) {
   const [editingId, setEditingId] = useState(null);
   const [sponsorEventTarget, setSponsorEventTarget] = useState(null);
   const [registerEventTarget, setRegisterEventTarget] = useState(null);
+  const [isProposalOpen, setIsProposalOpen] = useState(false);
+  const [proposalForm, setProposalForm] = useState({ title: '', category: 'Hackathon', date: '', time: '', location: '', organizer: '', description: '', capacity: 100, tags: '' });
 
   // Student Registration Verification State
   const [regForm, setRegForm] = useState({
@@ -84,19 +112,22 @@ export default function EventsPage({ isAdmin }) {
     tier: 'Silver',
     message: ''
   });
+  const currentUserId = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}').id; } catch { return null; } })();
 
   React.useEffect(() => {
     fetchApi('/events').then((apiEvents) => {
-      setEvents(apiEvents.map((event) => ({
-        ...event,
-        category: event.type,
-        date: formatDate(event.startDate),
-        time: event.endDate ? `${formatDate(event.startDate)} - ${formatDate(event.endDate)}` : 'Details available after registration',
-        organizer: 'AlumniConnect community',
-        capacity: 0,
-        registeredCount: 0,
-        tags: event.isOnline ? ['Online'] : ['In person']
-      })));
+      if (apiEvents.length) {
+        setEvents((current) => [...apiEvents.map((event) => ({
+          ...event,
+          category: event.type,
+          date: formatDate(event.startDate),
+          time: event.endDate ? `${formatDate(event.startDate)} - ${formatDate(event.endDate)}` : 'Details available after registration',
+          organizer: 'AlumniConnect community',
+          capacity: 0,
+          registeredCount: 0,
+          tags: event.isOnline ? ['Online'] : ['In person']
+        })), ...current.filter((event) => String(event.id).startsWith('e'))]);
+      }
     }).catch(() => {});
   }, []);
 
@@ -228,10 +259,16 @@ export default function EventsPage({ isAdmin }) {
     setIsEventModalOpen(false);
   };
 
-  const handleDeleteEvent = (id) => {
-    if (!isAdmin) return;
+  const handleDeleteEvent = (item) => {
+    if (!isAdmin && (!item.createdById || item.createdById !== currentUserId)) return;
+    const id = item.id;
     if (window.confirm('Are you sure you want to remove this event?')) {
-      setEvents((prev) => prev.filter((item) => item.id !== id));
+      const remove = () => setEvents((prev) => prev.filter((item) => item.id !== id));
+      if (String(id).startsWith('submitted-')) {
+        remove();
+      } else {
+        fetchApi(`/events/${id}`, { method: 'DELETE' }).then(remove).catch((error) => alert(error.message));
+      }
     }
   };
 
@@ -243,6 +280,14 @@ export default function EventsPage({ isAdmin }) {
     );
     setSponsorEventTarget(null);
     setSponsorForm({ companyName: '', contactEmail: '', tier: 'Silver', message: '' });
+  };
+
+  const handleProposalSubmit = (e) => {
+    e.preventDefault();
+    const submitted = { ...proposalForm, id: `submitted-${Date.now()}`, createdById: currentUserId, capacity: Number(proposalForm.capacity), registeredCount: 0, tags: proposalForm.tags.split(',').map((tag) => tag.trim()).filter(Boolean) };
+    setEvents((current) => [submitted, ...current]);
+    setIsProposalOpen(false);
+    setProposalForm({ title: '', category: 'Hackathon', date: '', time: '', location: '', organizer: '', description: '', capacity: 100, tags: '' });
   };
 
   return (
@@ -258,6 +303,12 @@ export default function EventsPage({ isAdmin }) {
           </h1>
         </div>
 
+        <button
+          onClick={() => setIsProposalOpen(true)}
+          className="inline-flex items-center gap-2 border border-[#002148] text-[#002148] hover:bg-[#002148]/5 text-xs font-semibold px-5 py-3 rounded-2xl transition-all self-start md:self-auto"
+        >
+          <Plus className="w-4 h-4" /> Suggest an event
+        </button>
         {isAdmin && (
           <button
             onClick={() => handleOpenEventModal()}
@@ -308,17 +359,17 @@ export default function EventsPage({ isAdmin }) {
                       <span>{item.registeredCount} / {item.capacity}</span>
                     </div>
 
-                    {isAdmin && (
+                    {(isAdmin || (item.createdById && item.createdById === currentUserId)) && (
                       <div className="flex items-center gap-1">
-                        <button
+                        {isAdmin && <button
                           onClick={() => handleOpenEventModal(item)}
                           className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-[#002148] rounded-lg transition-colors"
                           title="Edit Event"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
-                        </button>
+                        </button>}
                         <button
-                          onClick={() => handleDeleteEvent(item.id)}
+                          onClick={() => handleDeleteEvent(item)}
                           className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-colors"
                           title="Delete Event"
                         >
@@ -475,6 +526,26 @@ export default function EventsPage({ isAdmin }) {
                   Verify & Confirm
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isProposalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#002148]/60 p-4">
+          <div className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-7 shadow-2xl">
+            <button onClick={() => setIsProposalOpen(false)} className="absolute right-6 top-6 rounded-full p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            <span className="eyebrow">Host something for the network</span>
+            <h3 className="font-serif text-2xl font-bold text-[#002148]">Suggest an event or hackathon</h3>
+            <p className="mt-1 text-xs text-slate-500">Share the details and the community can review your proposal.</p>
+            <form onSubmit={handleProposalSubmit} className="mt-6 space-y-4">
+              <input required className="form-input" placeholder="Event or hackathon title" value={proposalForm.title} onChange={(e) => setProposalForm({ ...proposalForm, title: e.target.value })} />
+              <div className="grid grid-cols-2 gap-3"><select className="form-input" value={proposalForm.category} onChange={(e) => setProposalForm({ ...proposalForm, category: e.target.value })}><option>Hackathon</option><option>Workshop</option><option>Event</option></select><input required className="form-input" placeholder="Organizer name" value={proposalForm.organizer} onChange={(e) => setProposalForm({ ...proposalForm, organizer: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3"><input required className="form-input" placeholder="Date" value={proposalForm.date} onChange={(e) => setProposalForm({ ...proposalForm, date: e.target.value })} /><input required className="form-input" placeholder="Time" value={proposalForm.time} onChange={(e) => setProposalForm({ ...proposalForm, time: e.target.value })} /></div>
+              <input required className="form-input" placeholder="Location or meeting link" value={proposalForm.location} onChange={(e) => setProposalForm({ ...proposalForm, location: e.target.value })} />
+              <textarea required className="form-input min-h-28" placeholder="Tell us about the event" value={proposalForm.description} onChange={(e) => setProposalForm({ ...proposalForm, description: e.target.value })} />
+              <div className="grid grid-cols-2 gap-3"><input type="number" min="1" className="form-input" placeholder="Capacity" value={proposalForm.capacity} onChange={(e) => setProposalForm({ ...proposalForm, capacity: e.target.value })} /><input className="form-input" placeholder="Tags: AI, careers" value={proposalForm.tags} onChange={(e) => setProposalForm({ ...proposalForm, tags: e.target.value })} /></div>
+              <button className="primary-button w-full justify-center"><Plus className="h-4 w-4" /> Submit proposal</button>
             </form>
           </div>
         </div>

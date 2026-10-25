@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit3, Trash2, GraduationCap, MapPin, Briefcase } from 'lucide-react';
 import { toLinkedInUrl, LinkedInIcon } from '../lib/linkedin.jsx';
+import { initialsAvatar } from '../lib/avatar';
 
 export default function AlumniCard({ item, isAdmin, onEdit, onDelete, onCardClick }) {
   return (
@@ -13,11 +14,11 @@ export default function AlumniCard({ item, isAdmin, onEdit, onDelete, onCardClic
       <div>
         <div className="relative w-full h-56 rounded-2xl overflow-hidden mb-5 bg-slate-100">
           <img
-            src={item.avatar}
+            src={item.avatar || initialsAvatar(item.name)}
             alt={item.name}
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=500&auto=format&fit=crop&q=80';
+              e.target.src = initialsAvatar(item.name);
             }}
             className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
           />

@@ -11,7 +11,18 @@ import adminRoutes from "./routes/admin.routes";
 
 export const app = express();
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (for example health checks) without an Origin header.
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS origin not allowed: ${origin}`));
+  },
+}));
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
