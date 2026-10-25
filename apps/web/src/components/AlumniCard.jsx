@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit3, Trash2, GraduationCap, MapPin, Briefcase } from 'lucide-react';
+import { toLinkedInUrl, LinkedInIcon } from '../lib/linkedin.jsx';
 
 export default function AlumniCard({ item, isAdmin, onEdit, onDelete, onCardClick }) {
   return (
@@ -73,6 +74,18 @@ export default function AlumniCard({ item, isAdmin, onEdit, onDelete, onCardClic
           <MapPin className="w-4 h-4 text-[#ffc002]" />
           <span>{item.location}</span>
         </div>
+        {toLinkedInUrl(item.linkedinUrl) && (
+          <a
+            href={toLinkedInUrl(item.linkedinUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2 inline-flex items-center gap-2 rounded-xl bg-[#0A66C2] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#004182]"
+          >
+            <LinkedInIcon className="w-3.5 h-3.5" />
+            LinkedIn
+          </a>
+        )}
       </div>
     </div>
   );

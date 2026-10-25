@@ -61,7 +61,7 @@ export default function DirectoryPage({ isAdmin }) {
         location: '',
         bio: '',
         avatar: '',
-        linkedinUrl: 'https://linkedin.com'
+        linkedinUrl: ''
       });
     }
     setIsModalOpen(true);

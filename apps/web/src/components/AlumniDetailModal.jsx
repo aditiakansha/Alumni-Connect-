@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, ExternalLink, GraduationCap, MapPin, Briefcase } from 'lucide-react';
+import { toLinkedInUrl, LinkedInIcon } from '../lib/linkedin.jsx';
 
 export default function AlumniDetailModal({ alumni, onClose }) {
   if (!alumni) return null;
@@ -58,15 +59,22 @@ export default function AlumniDetailModal({ alumni, onClose }) {
           </div>
 
           <div className="pt-2 flex gap-3">
-            <a 
-              href={alumni.linkedinUrl || 'https://linkedin.com'} 
-              target="_blank" 
-              rel="noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 bg-[#002148] hover:bg-[#001733] text-white rounded-2xl font-semibold text-xs transition-all"
-            >
-              <span>View LinkedIn Profile</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {toLinkedInUrl(alumni.linkedinUrl) ? (
+              <a
+                href={toLinkedInUrl(alumni.linkedinUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-2xl font-semibold text-xs transition-all"
+              >
+                <LinkedInIcon className="w-3.5 h-3.5" />
+                <span>View LinkedIn Profile</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <span className="flex-1 inline-flex items-center justify-center py-3 px-4 rounded-2xl bg-slate-100 text-slate-400 text-xs font-semibold">
+                No LinkedIn added
+              </span>
+            )}
             <button
               onClick={onClose}
               className="px-5 py-3 rounded-2xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
