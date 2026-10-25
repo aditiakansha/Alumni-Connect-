@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Save, UserRound } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Save } from 'lucide-react';
 import { fetchApi } from '../lib/api';
+import { initialsAvatar } from '../lib/avatar';
 
 const blank = { role: 'STUDENT', fullName: '', avatarUrl: '', graduationYear: '', degree: '', branch: '', currentPosition: '', currentCompany: '', location: '', bio: '', linkedinUrl: '' };
 
@@ -50,7 +51,7 @@ export default function ProfilePage() {
     <main className="mx-auto max-w-3xl px-6 py-10">
       <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#002148]"><ArrowLeft className="h-4 w-4" /> Back home</Link>
       <div className="mb-8 flex items-center gap-4">
-        {form.avatarUrl ? <img src={form.avatarUrl} alt="" className="h-20 w-20 rounded-2xl object-cover" /> : <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#002148] text-white"><UserRound className="h-8 w-8" /></div>}
+        {form.avatarUrl ? <img src={form.avatarUrl} alt="" className="h-20 w-20 rounded-2xl object-cover" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = initialsAvatar(form.fullName || email); }} /> : <img src={initialsAvatar(form.fullName || email)} alt="" className="h-20 w-20 rounded-2xl object-cover" />}
         <div><span className="eyebrow">Your network profile</span><h1 className="page-title text-3xl">{form.fullName || 'Your profile'}<span className="text-[#ffc002]">.</span></h1><p className="text-sm text-slate-500">{email}</p></div>
       </div>
       <form onSubmit={save} className="panel space-y-5">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Users, Calendar, MessageSquare, BriefcaseBusiness, Handshake, LogIn, X } from 'lucide-react';
 import { fetchApi } from '../lib/api';
+import { initialsAvatar } from '../lib/avatar';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -118,7 +119,7 @@ export default function Navbar() {
           {user ? (
             <>
               {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full" />
+                <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = initialsAvatar(user.name || user.email); }} />
               ) : (
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#002148] text-[10px] text-white">
                   {(user.name || user.email || '?').charAt(0).toUpperCase()}

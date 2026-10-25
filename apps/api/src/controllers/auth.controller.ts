@@ -22,12 +22,20 @@ const googleLoginSchema = z.object({
   idToken: z.string().min(1),
 });
 
+function isVitStudentEmail(email: string) {
+  return email.trim().toLowerCase().endsWith("@vitstudent.ac.in");
+}
+
 export async function register(req: Request, res: Response) {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten() });
   }
   const { email, password, fullName, role } = parsed.data;
+
+  if (!isVitStudentEmail(email)) {
+    return res.status(403).json({ message: "Only @vitstudent.ac.in email addresses can create an account" });
+  }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -56,6 +64,10 @@ export async function login(req: Request, res: Response) {
   }
   const { email, password } = parsed.data;
 
+  if (!isVitStudentEmail(email)) {
+    return res.status(403).json({ message: "Only @vitstudent.ac.in email addresses can sign in" });
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await comparePassword(password, user.passwordHash))) {
     return res.status(401).json({ message: "Invalid email or password" });
@@ -82,6 +94,10 @@ export async function googleLogin(req: Request, res: Response) {
 
   if (!googleUser.emailVerified) {
     return res.status(401).json({ message: "Google email not verified" });
+  }
+
+  if (!isVitStudentEmail(googleUser.email)) {
+    return res.status(403).json({ message: "Only @vitstudent.ac.in Google accounts can sign in" });
   }
 
   let user = await prisma.user.findUnique({
